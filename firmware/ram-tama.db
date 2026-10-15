@@ -1,0 +1,38 @@
+/*
+ * RAM-only run over USB recovery mode (nothing is written to the device):
+ * Philips power/clock init without the NAND bootloader hand-off, play0 for
+ * the LCD, then the Tamagotchi. Unplugging USB reboots into the firmware in
+ * NAND.
+ */
+options
+{
+    productVersion = "001.007.000";
+    componentVersion = "001.007.000";
+    driveTag = 0x50;
+    flags = 0x100;
+    sbMinorVersion = 0x1;
+}
+sources
+{
+    init0 = "build/fw/raga____.0.elf";
+    init1 = "build/fw/raga____.1.elf";
+    init2 = "build/fw/raga____.2.elf";
+    init3 = "build/fw/raga____.3.elf";
+    play0 = "build/fw/ragaplay.0.elf";
+    app = "build/tama.elf";
+}
+section(0; alignment = 0x10, cleartext = 0x0, sectionFlags = 0x0)
+{
+    load init0;
+    call init0(0);
+    load init1;
+    call init1(0);
+    load init2;
+    call init2(0);
+    load init3;
+    call init3(0);
+    load play0;
+    call play0(0);
+    load app;
+    call app(0);
+}

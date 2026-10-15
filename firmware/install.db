@@ -1,0 +1,116 @@
+/*
+ * The stock firmware (philips-raga-SA3RGA-1.7.0.sb, unpacked by sbtoelf into
+ * build/fw/) with the Tamagotchi added to the two player sections: 'play'
+ * and 'pSay' (charge & play). After play0 (LCD init, boot logo) tama.elf
+ * runs; it returns only when BACK is held at power-on, and then the original
+ * player (play1 / pSay1) loads as before. Every other section is unchanged.
+ * Options are copied from the stock image.
+ */
+constants
+{
+}
+options
+{
+    productVersion = "001.007.000";
+    componentVersion = "001.007.000";
+    driveTag = 0x50;
+    flags = 0x100;
+    timestampLow = 0x5de11400;
+    timestampHigh = 0x14615;
+    sbMinorVersion = 0x1;
+}
+sources
+{
+    ____0 = "build/fw/raga____.0.elf";
+    ____1 = "build/fw/raga____.1.elf";
+    ____2 = "build/fw/raga____.2.elf";
+    ____3 = "build/fw/raga____.3.elf";
+    ____4 = "build/fw/raga____.4.elf";
+    ____5 = "build/fw/raga____.5.elf";
+    mlc_0 = "build/fw/ragamlc_.0.elf";
+    mlc_1 = "build/fw/ragamlc_.1.elf";
+    host0 = "build/fw/ragahost.0.elf";
+    play0 = "build/fw/ragaplay.0.elf";
+    play1 = "build/fw/ragaplay.1.elf";
+    mmc_0 = "build/fw/ragammc_.0.elf";
+    mmc_1 = "build/fw/ragammc_.1.elf";
+    hSst0 = "build/fw/ragahSst.0.elf";
+    pSay0 = "build/fw/ragapSay.0.elf";
+    pSay1 = "build/fw/ragapSay.1.elf";
+    hvm2 = "build/fw/ragahvm2.bin";
+    hvmi = "build/fw/ragahvmi.bin";
+    pvm2 = "build/fw/ragapvm2.bin";
+    pvmi = "build/fw/ragapvmi.bin";
+    hSm2 = "build/fw/ragahSm2.bin";
+    hSmi = "build/fw/ragahSmi.bin";
+    pSm2 = "build/fw/ragapSm2.bin";
+    pSmi = "build/fw/ragapSmi.bin";
+    rsrc = "build/fw/ragarsrc.bin";
+    tama = "build/tama.elf";
+}
+section(0; alignment = 0x10, cleartext = 0x0, sectionFlags = 0x0)
+{
+    load ____0;
+    call ____0(0);
+    load ____1;
+    call ____1(0);
+    load ____2;
+    call ____2(0);
+    load ____3;
+    call ____3(0);
+    load ____4;
+    call ____4(0x6d6d635f);
+    load ____5;
+    call ____5(0x6d6c635f);
+}
+section(0x6d6c635f; alignment = 0x10, cleartext = 0x0, sectionFlags = 0x0)
+{
+    load mlc_0;
+    call mlc_0(0x1);
+    load mlc_1;
+    jump mlc_1(0);
+}
+section(0x686f7374; alignment = 0x10, cleartext = 0x0, sectionFlags = 0x0)
+{
+    load host0;
+    jump host0(0);
+}
+section(0x706c6179; alignment = 0x10, cleartext = 0x0, sectionFlags = 0x0)
+{
+    load play0;
+    call play0(0);
+    load tama;
+    call tama(0);
+    load play1;
+    jump play1(0);
+}
+section(0x6d6d635f; alignment = 0x10, cleartext = 0x0, sectionFlags = 0x0)
+{
+    load mmc_0;
+    call mmc_0(0x1);
+    load mmc_1;
+    jump mmc_1(0);
+}
+section(0x68537374; alignment = 0x10, cleartext = 0x0, sectionFlags = 0x0)
+{
+    load hSst0;
+    jump hSst0(0);
+}
+section(0x70536179; alignment = 0x10, cleartext = 0x0, sectionFlags = 0x0)
+{
+    load pSay0;
+    call pSay0(0);
+    load tama;
+    call tama(0);
+    load pSay1;
+    jump pSay1(0);
+}
+section(0x68766d32; alignment = 0x2000, cleartext = 0x1, sectionFlags = 0x0) <= hvm2;
+section(0x68766d69; alignment = 0x1000, cleartext = 0x1, sectionFlags = 0x0) <= hvmi;
+section(0x70766d32; alignment = 0x1000, cleartext = 0x1, sectionFlags = 0x0) <= pvm2;
+section(0x70766d69; alignment = 0x4000, cleartext = 0x1, sectionFlags = 0x0) <= pvmi;
+section(0x68536d32; alignment = 0x1000, cleartext = 0x1, sectionFlags = 0x0) <= hSm2;
+section(0x68536d69; alignment = 0x4000, cleartext = 0x1, sectionFlags = 0x0) <= hSmi;
+section(0x70536d32; alignment = 0x2000, cleartext = 0x1, sectionFlags = 0x0) <= pSm2;
+section(0x70536d69; alignment = 0x1000, cleartext = 0x1, sectionFlags = 0x0) <= pSmi;
+section(0x72737263; alignment = 0x20000, cleartext = 0x1, sectionFlags = 0x0) <= rsrc;

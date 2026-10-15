@@ -1,0 +1,7 @@
+/build/
+/tools/bin/
+/tools/src/
+# Philips firmware: each user dumps it from their own device, never committed
+/firmware/*.sb
+*.bin
+.DS_Store
