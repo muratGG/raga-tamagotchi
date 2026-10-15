@@ -248,10 +248,14 @@ static enum mood mood(void)
 
 /* ---- drawing ----------------------------------------------------------- */
 
+/* Scale of the pet being drawn: PET_S on the pet screen, larger on the
+ * choose screen. Set by draw_pet_scaled() for its face_px() calls. */
+static int face_scale = PET_S;
+
 /* One sprite-pixel of the pet's face, in 16x16 sprite coordinates. */
 static void face_px(int px, int py, int col, int row, char ch)
 {
-    fb_rect(px + col * PET_S, py + row * PET_S, PET_S, PET_S, palette(ch));
+    fb_rect(px + col * face_scale, py + row * face_scale, face_scale, face_scale, palette(ch));
 }
 
 static void draw_eye(int px, int py, int col, enum mood m, int closed)
@@ -274,10 +278,11 @@ static void draw_eye(int px, int py, int col, enum mood m, int closed)
     face_px(px, py, col + 1, 6, 'b');
 }
 
-static void draw_pet(int px, int py, enum mood m, int closed, int mouth_open)
+static void draw_pet_scaled(int px, int py, int scale, enum mood m, int closed, int mouth_open)
 {
+    face_scale = scale;
     pet_colors(pet, m == MOOD_SICK);
-    fb_sprite(px, py, pet->body, 16, 16, PET_S, palette);
+    fb_sprite(px, py, pet->body, 16, 16, scale, palette);
 
     draw_eye(px, py, 4, m, closed);
     draw_eye(px, py, 10, m, closed);
@@ -303,6 +308,11 @@ static void draw_pet(int px, int py, enum mood m, int closed, int mouth_open)
     }
     if (m == MOOD_SAD && !closed)
         face_px(px, py, 4, 7, 'c'); /* tear */
+}
+
+static void draw_pet(int px, int py, enum mood m, int closed, int mouth_open)
+{
+    draw_pet_scaled(px, py, PET_S, m, closed, mouth_open);
 }
 
 /* Small bar beside its icon, filling from the left. */
@@ -435,8 +445,7 @@ static void draw_choose_screen(unsigned now)
 
     fb_rect(0, 0, LCD_W, LCD_H, day.sky);
     fb_rect(0, 54, LCD_W, LCD_H - 54, day.grass);
-    pet_colors(pet, 0);
-    fb_sprite((LCD_W - 48) / 2, 6 + bob, pet->body, 16, 16, 3, palette);
+    draw_pet_scaled((LCD_W - 48) / 2, 6 + bob, 3, MOOD_HAPPY, 0, 0);
     for (int i = 0; i < 5; i++) { /* < and > */
         fb_rect(10 + i, 30 - i, 1, 2 * i + 1, arrow);
         fb_rect(LCD_W - 11 - i, 30 - i, 1, 2 * i + 1, arrow);

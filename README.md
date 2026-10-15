@@ -11,6 +11,18 @@ the original music player is still one button away.
   at night
 - Mini games that cheer the pet up: Flappy, Snake, Catch, Runner
 
+| | |
+|---|---|
+| ![Choosing a pet](docs/screenshots/choose-pet.png) | ![A happy chick](docs/screenshots/pet-happy.png) |
+| ![A sad cat with poop around](docs/screenshots/pet-sad-poop.png) | ![A dog eating an apple](docs/screenshots/pet-eating.png) |
+| ![The action menu](docs/screenshots/menu.png) | ![Asleep at night](docs/screenshots/night.png) |
+| ![The games menu](docs/screenshots/games-menu.png) | ![Flappy](docs/screenshots/game-flappy.png) |
+| ![Snake](docs/screenshots/game-snake.png) | ![Catch](docs/screenshots/game-catch.png) |
+| ![Runner](docs/screenshots/game-runner.png) | |
+
+The screen is 128x64; these are the game's own frames, drawn on a computer
+by the same code (`make screenshots`) and scaled up 3x.
+
 This repository has no Philips code. You dump the firmware from your own
 Raga, the build adds the game to it, and you write the result back.
 

@@ -4,6 +4,7 @@
 #   make              build/raga-tama-fw.sb (to install) and the RAM images
 #   make run          run the Tamagotchi from RAM (device in recovery mode)
 #   make run-keytest  run the button calibration screen from RAM
+#   make screenshots  redraw docs/screenshots/*.png on the build machine
 #   make clean
 
 TOOLS   := tools/bin
@@ -61,6 +62,18 @@ build/tama-ram.sb: firmware/ram-tama.db build/tama.elf build/fw/.stamp | $(TOOLS
 build/keytest-ram.sb: firmware/ram-keytest.db build/keytest.elf build/fw/.stamp | $(TOOLS)/elftosb
 	$(TOOLS)/elftosb -z -c $< -o $@
 
+# The game's drawing code built for this machine; see tools/screenshot.c.
+SHOT_SRC := tools/screenshot.c src/lcd.c src/fb.c src/sprites.c src/gameutil.c \
+            src/flappy.c src/snake.c src/catch.c src/runner.c
+
+build/host/screenshot: $(SHOT_SRC) src/main.c $(HEADERS)
+	@mkdir -p build/host
+	cc -std=gnu99 -O1 -w -Isrc -o $@ $(SHOT_SRC) -lz
+
+screenshots: build/host/screenshot
+	@mkdir -p docs/screenshots
+	build/host/screenshot docs/screenshots
+
 run: build/tama-ram.sb | $(TOOLS)/sbloader
 	sudo $(TOOLS)/sbloader $<
 
@@ -70,4 +83,4 @@ run-keytest: build/keytest-ram.sb | $(TOOLS)/sbloader
 clean:
 	rm -rf build
 
-.PHONY: all tools run run-keytest clean
+.PHONY: all tools screenshots run run-keytest clean
