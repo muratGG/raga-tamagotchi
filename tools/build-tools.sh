@@ -3,12 +3,12 @@
 #   sbtoelf   unpack a firmware image (.sb)
 #   elftosb   pack one
 #   sbloader  send one to a device in USB recovery mode
-#   scsitool  read/write the firmware of a device in normal USB mode
-#             (native on Linux; on macOS, Windows .exe builds via zig,
-#             because macOS has no raw SCSI access for it)
+#   scsitool  read/write the firmware of a device in normal USB mode:
+#             native on Linux; on macOS over libusb (tools/rbscsi-libusb.c,
+#             run with sudo), plus Windows .exe builds via zig if present
 #
-# Needs: git, make, a C compiler, pkg-config + libusb-1.0; zig for the
-# Windows scsitool on macOS. The Rockbox sources are GPLv2 and pinned below.
+# Needs: git, make, a C compiler, pkg-config + libusb-1.0; zig (optional) for
+# the Windows scsitool. The Rockbox sources are GPLv2 and pinned below.
 set -eu
 
 ROCKBOX_URL=https://github.com/Rockbox/rockbox.git
@@ -38,6 +38,11 @@ Linux)
     cc -std=gnu99 -O1 -I"$src/utils/scsi" -o "$bin/scsitool" $scsi_src
     ;;
 *)
+    # rbscsi has no backend here; ours speaks USB mass storage via libusb
+    scsi_tool_src=$(echo "$scsi_src" | sed "s|$src/utils/scsi/rbscsi.c|$here/rbscsi-libusb.c|")
+    # shellcheck disable=SC2086
+    cc -std=gnu99 -O1 -I"$src/utils/scsi" $(pkg-config --cflags libusb-1.0) \
+        -o "$bin/scsitool" $scsi_tool_src $(pkg-config --libs libusb-1.0)
     if command -v zig >/dev/null; then
         for arch in aarch64 x86_64; do
             # shellcheck disable=SC2086

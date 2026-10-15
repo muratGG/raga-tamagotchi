@@ -18,7 +18,7 @@ STOCK_FW   := firmware/raga-stock.sb
 STOCK_SHA1 := 89dde5822b22ce61561ba7610b3936b1ac74e26c
 
 HEADERS  := $(wildcard src/*.h)
-# link order kept as built for prebuilt/raga-tama-fw.sb, so it reproduces
+# link order of the first installed image, so that image reproduces exactly
 TAMA_SRC := src/start.S src/main.c src/lcd.c src/buttons.c src/fb.c src/clock.c \
             src/power.c src/sprites.c src/gameutil.c src/flappy.c src/snake.c \
             src/catch.c src/runner.c

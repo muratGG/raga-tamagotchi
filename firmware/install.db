@@ -1,6 +1,6 @@
 /*
- * The stock firmware (philips-raga-SA3RGA-1.7.0.sb, unpacked by sbtoelf into
- * build/fw/) with the Tamagotchi added to the two player sections: 'play'
+ * The stock firmware (your dump, firmware/raga-stock.sb, unpacked by sbtoelf
+ * into build/fw/) with the Tamagotchi added to the two player sections: 'play'
  * and 'pSay' (charge & play). After play0 (LCD init, boot logo) tama.elf
  * runs; it returns only when BACK is held at power-on, and then the original
  * player (play1 / pSay1) loads as before. Every other section is unchanged.

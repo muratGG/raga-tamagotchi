@@ -23,41 +23,66 @@ Raga models (SA2RGA, SA4RGA) have different firmware and are not supported.
 ## What you need
 
 - The Raga and its USB cable.
-- To read and write its firmware: Rockbox's `scsitool`, on **Windows**
-  (prebuilt `.exe` files in `prebuilt/`) or **Linux** (`make tools`). macOS
-  cannot send the raw SCSI commands it needs; from a Mac, use a Windows or
-  Linux virtual machine with USB passthrough (VMware, UTM, ...).
-- To build: macOS or Linux with `arm-none-eabi-gcc`, git, a C compiler,
-  libusb-1.0 and pkg-config.
+- macOS or Linux with `arm-none-eabi-gcc`, git, a C compiler, libusb-1.0 and
+  pkg-config. `make tools` builds everything else, including `scsitool`,
+  which reads and writes the player's firmware over USB.
+- On Windows: build inside WSL, read and write from Windows (see below).
+
+### Windows
+
+The build needs a Unix shell, so it runs in WSL (Ubuntu). Talking to the Raga
+from WSL would need USB passthrough, so reading and writing stay on the
+Windows side with the prebuilt `scsitool` in `prebuilt/`.
+
+    wsl --install -d Ubuntu
+
+In Ubuntu:
+
+    sudo apt install build-essential git pkg-config libusb-1.0-0-dev gcc-arm-none-eabi
+
+Clone the project inside WSL and follow the steps below, running
+`make tools` and `make` in Ubuntu and every `scsitool` command in an
+administrator prompt on Windows (`prebuilt\scsitool-x86_64.exe`, with `E:`
+as the device). Windows sees the WSL files under `\\wsl$\Ubuntu\`, so the
+dump goes into the project's `firmware\` folder there, and the image to
+write is in its `build\` folder.
 
 ## Install
 
-1. Connect the Raga normally and note its drive letter (here `E:`). In an
-   administrator command prompt (`scsitool-aarch64.exe` on Windows on ARM):
+`scsitool` talks to the Raga in its normal USB mode: switch the player off,
+then plug it in. Below, `<dev>` is how to name the device:
 
-       scsitool-x86_64.exe -i E:
+| System | `<dev>` | Notes |
+|---|---|---|
+| macOS | `-` | run with `sudo`; first `diskutil unmount "/Volumes/NO NAME"` |
+| Linux | `/dev/sgN` | the Raga's SCSI generic node (`lsscsi -g`), with `sudo` |
+| Windows | `E:` | its drive letter, administrator prompt, `scsitool-x86_64.exe` (`-aarch64` on ARM) |
+
+1. Build the tools, then check the player:
+
+       make tools
+       sudo tools/bin/scsitool -i <dev>
 
    It must report `Chip Major Rev ID: 37b0` and, under `Drive 50`,
    `Project version: 1.7.0`.
-2. Dump the firmware. This is also your backup: keep a copy somewhere safe.
+2. Dump the firmware into the project. This is also your backup: keep a copy
+   somewhere safe.
 
-       scsitool-x86_64.exe -x raga-stock.sb E:
+       sudo tools/bin/scsitool -x firmware/raga-stock.sb <dev>
 
-3. On the build machine, put it at `firmware/raga-stock.sb` and build:
+3. Build:
 
-       make tools
        make
 
    This gives `build/raga-tama-fw.sb`.
 4. Write it to the Raga:
 
-       scsitool-x86_64.exe -w raga-tama-fw.sb --yes-i-want-a-brick E:
+       sudo tools/bin/scsitool -w build/raga-tama-fw.sb --yes-i-want-a-brick <dev>
 
-5. Optional, recommended: read it back and compare with the file you wrote.
+5. Optional, recommended: read it back; the two checksums must match.
 
-       scsitool-x86_64.exe -x readback.sb E:
-       certutil -hashfile readback.sb SHA1
-       certutil -hashfile raga-tama-fw.sb SHA1
+       sudo tools/bin/scsitool -x build/readback.sb <dev>
+       shasum build/readback.sb build/raga-tama-fw.sb
 
 6. Unplug, then switch on with the power slider.
 
@@ -86,7 +111,7 @@ The pet is not saved yet: switching off starts over with a new pet.
 USB mode and the boot loader are untouched, so the Raga keeps showing up on
 USB. Write your backup from Install step 2 the same way:
 
-    scsitool-x86_64.exe -w raga-stock.sb --yes-i-want-a-brick E:
+    sudo tools/bin/scsitool -w firmware/raga-stock.sb --yes-i-want-a-brick <dev>
 
 If it does not boot at all, use the chip's USB recovery mode, which lives in
 mask ROM and cannot be overwritten: switch off, hold UP (volume +) and plug
@@ -124,6 +149,7 @@ hardware directly. Every other section is left as it was. Details:
 | `firmware/raga-stock.sb` | your dump goes here (not in git) |
 | `prebuilt/` | Windows `scsitool` builds |
 | `tools/build-tools.sh` | builds the Rockbox tools (pinned commit) |
+| `tools/rbscsi-libusb.c` | lets `scsitool` run on macOS: USB mass storage commands over libusb |
 
 ## Credits and licences
 
