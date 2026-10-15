@@ -153,6 +153,8 @@ hardware directly. Every other section is left as it was. Details:
 
 ## Credits and licences
 
+- This project's own code (`src/`, `tools/rbscsi-libusb.c`, the build files
+  and docs): MIT, see [LICENSE](LICENSE).
 - Rockbox `imxtools` (sbtoelf, elftosb, sbloader, scsitool): GPLv2,
   <https://www.rockbox.org>. The `.exe` files in `prebuilt/` are built from
   the commit pinned in `tools/build-tools.sh`.
