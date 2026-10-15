@@ -36,8 +36,9 @@ Raga models (SA2RGA, SA4RGA) have different firmware and are not supported.
 
 - The Raga and its USB cable.
 - macOS or Linux with `arm-none-eabi-gcc`, git, a C compiler, libusb-1.0 and
-  pkg-config. `make tools` builds everything else, including `scsitool`,
-  which reads and writes the player's firmware over USB.
+  pkg-config. `make tools` fetches Rockbox's sources and builds the rest
+  into `tools/bin/` (not in the repository; it appears after that step),
+  including `scsitool`, which reads and writes the player's firmware over USB.
 - On Windows: build inside WSL, read and write from Windows (see below).
 
 ### Windows
@@ -70,7 +71,7 @@ then plug it in. Below, `<dev>` is how to name the device:
 | Linux | `/dev/sgN` | the Raga's SCSI generic node (`lsscsi -g`), with `sudo` |
 | Windows | `E:` | its drive letter, administrator prompt, `scsitool-x86_64.exe` (`-aarch64` on ARM) |
 
-1. Build the tools, then check the player:
+1. Build the tools into `tools/bin/`, then check the player:
 
        make tools
        sudo tools/bin/scsitool -i <dev>
@@ -160,7 +161,7 @@ hardware directly. Every other section is left as it was. Details:
 | `firmware/*.db` | elftosb recipes: installable image, RAM images |
 | `firmware/raga-stock.sb` | your dump goes here (not in git) |
 | `prebuilt/` | Windows `scsitool` builds |
-| `tools/build-tools.sh` | builds the Rockbox tools (pinned commit) |
+| `tools/build-tools.sh` | builds the Rockbox tools (pinned commit) into `tools/bin/` (`make tools`; not in git) |
 | `tools/rbscsi-libusb.c` | lets `scsitool` run on macOS: USB mass storage commands over libusb |
 
 ## Credits and licences
