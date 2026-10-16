@@ -67,14 +67,17 @@ static const unsigned decay_ms[S_COUNT] = {
 
 /* ---- layout ------------------------------------------------------------ */
 
-/* One status row at the top: icon + small bar per stat, then sun/moon and
- * the clock on the right. Everything below it is the play area. */
+/* One status row at the top: icon + small bar per stat, then the battery
+ * and the clock on the right. Everything below it is the play area; the
+ * sun or moon hangs in the sky under the clock. */
 #define HUD_H    8
-#define STAT_W   24                        /* per stat: icon, gap, bar */
-#define BAR_W    14
+#define STAT_W   22                        /* per stat: icon, gap, bar */
+#define BAR_W    13
 #define BAR_H    4
-#define SUN_X    (S_COUNT * STAT_W + 2)
+#define BATT_X   (S_COUNT * STAT_W + 1)    /* 7 px icon, gap, up to "100" */
 #define TIME_X   (LCD_W - 19)
+#define SUN_X    (TIME_X + 5)
+#define SUN_Y    (HUD_H + 2)
 #define PLAY_X   0                         /* play area: x PLAY_X..LCD_W-1 */
 #define PLAY_CX  ((PLAY_X + LCD_W) / 2)
 #define GROUND_Y 56
@@ -202,6 +205,27 @@ static struct {
     unsigned clock_t0;
     int clock_field;                /* clock screen: 0 hours, 1 minutes */
 } g;
+
+/* Battery voltage, smoothed (the backlight and CPU load make single
+ * readings jump); 0 until the first reading. On USB power the voltage is
+ * the charger's, so it starts over once USB is gone. */
+static unsigned batt_mv, batt_t;
+
+#define BATT_SAMPLE_MS 1000
+
+static void sample_battery(unsigned now)
+{
+    unsigned mv = battery_mv();
+
+    if (usb_power()) {
+        batt_mv = 0;
+        return;
+    }
+    if (!mv || (batt_mv && now - batt_t < BATT_SAMPLE_MS))
+        return;
+    batt_t = now;
+    batt_mv = batt_mv ? (batt_mv * 7 + mv) / 8 : mv;
+}
 
 /* Minutes after midnight, from the time set at boot plus elapsed time. */
 static int time_of_day(unsigned now)
@@ -338,7 +362,41 @@ static int draw_time(int x, int y, int minutes, int scale, u16 c)
     return 4 * cell + scale;
 }
 
-static void draw_hud(int dark, unsigned now)
+static const char *const bolt[5] = {"..y", ".y.", "yyy", ".y.", "y.."};
+
+#define CHARGE_STEP_MS 400
+
+/* Battery outline with a nub, filled by charge, and the percentage beside
+ * it; nothing until the first reading. On USB power a lightning bolt
+ * instead of the number: the fill climbs while the charger runs and stays
+ * full when it doesn't (charged, or not charging at all). */
+static void draw_battery(int x, int y, unsigned now)
+{
+    u16 rim = RGB(200, 200, 210), green = RGB(80, 220, 90);
+    int fill;
+    u16 c;
+
+    if (usb_power()) {
+        fill = battery_charging() ? (now / CHARGE_STEP_MS) % 5 : 4;
+        c = green;
+    } else if (batt_mv) {
+        int pct = battery_percent(batt_mv);
+        fill = (pct * 4 + 99) / 100;
+        c = pct > 50 ? green : pct > 20 ? RGB(255, 200, 40) : RGB(240, 60, 60);
+        fb_number(x + 9, y, pct, 1, RGB(255, 255, 255));
+    } else {
+        return;
+    }
+
+    fb_rect(x, y, 6, 5, rim);
+    fb_rect(x + 6, y + 1, 1, 3, rim);
+    fb_rect(x + 1, y + 1, 4, 3, C_HUD);
+    fb_rect(x + 1, y + 1, fill, 3, c);
+    if (usb_power())
+        fb_sprite(x + 9, y, bolt, 3, 5, 1, palette);
+}
+
+static void draw_hud(unsigned now)
 {
     fb_rect(0, 0, LCD_W, HUD_H, C_HUD);
     for (int i = 0; i < S_COUNT; i++) {
@@ -346,7 +404,7 @@ static void draw_hud(int dark, unsigned now)
         fb_sprite(x + 1, (HUD_H - 5) / 2, icon5[i], 5, 5, 1, palette);
         draw_bar(x + 8, (HUD_H - BAR_H) / 2, g.stat[i]);
     }
-    fb_sprite(SUN_X, 0, dark ? moon : sun, 8, 8, 1, palette);
+    draw_battery(BATT_X, (HUD_H - 5) / 2, now);
     draw_time(TIME_X, (HUD_H - 5) / 2, time_of_day(now), 1, RGB(255, 255, 255));
 }
 
@@ -356,6 +414,7 @@ static void draw_scene(int dark)
     u16 grass = dark ? night.grass : day.grass;
 
     fb_rect(PLAY_X, HUD_H, LCD_W - PLAY_X, GROUND_Y - HUD_H, sky);
+    fb_sprite(SUN_X, SUN_Y, dark ? moon : sun, 8, 8, 1, palette);
     fb_rect(PLAY_X, GROUND_Y, LCD_W - PLAY_X, LCD_H - GROUND_Y, grass);
     for (int i = 0; i < g.npoop; i++)
         fb_sprite(g.poop_x[i], POOP_Y, poop, 6, 6, 1, palette);
@@ -526,7 +585,7 @@ static void render(unsigned now)
     if (asleep)
         draw_zzz(px, t);
 
-    draw_hud(g.state == ST_NIGHT, now); /* after the pet: rising Z's may reach it */
+    draw_hud(now); /* after the pet: rising Z's may reach it */
 
     if (g.state == ST_MENU)
         draw_icon_bar(action_icon, ACT_COUNT, g.sel);
@@ -824,6 +883,7 @@ int main(void)
 
     watchdog_disable();
     clock_init();
+    battery_init();
 
     for (int s = 0; s < S_COUNT; s++) {
         g.stat[s] = 80;
@@ -855,6 +915,8 @@ int main(void)
         unsigned now = clock_ms();
         unsigned pressed = held & ~prev;
         prev = held;
+        sample_battery(now);
+        charger_update(now);
 
         /* Power slider: the hold that switched us on doesn't count; after a
          * release, holding it again for 2 s switches off. */

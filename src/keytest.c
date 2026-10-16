@@ -2,8 +2,10 @@
  * Button calibration screen, large decimal digits:
  *   top    (yellow): POWER_STS.PSWITCH level (0..3) - power slider and UP
  *   bottom (cyan)  : LRADC channel 1 (0..4095)      - resistor-ladder buttons
+ *   top right (green, small): battery voltage in mV  - for the charge curve
  */
 #include "lcd.h"
+#include "power.h"
 
 #define HW_POWER_STS        0x800440b0
 #define POWER_STS_PSWITCH_BP 18
@@ -31,10 +33,12 @@ int main(void)
     const u16 bg = RGB(0, 0, 0);
     const u16 yellow = RGB(255, 220, 60);
     const u16 cyan = RGB(80, 220, 255);
-    u32 last_p = ~0u, last_l = ~0u;
+    const u16 green = RGB(80, 220, 90);
+    u32 last_p = ~0u, last_l = ~0u, last_mv = ~0u;
 
     watchdog_disable();
     REG32(HW_LRADC_CTRL0_CLR) = LRADC_SFTRST_CLKGATE;
+    battery_init();
 
     lcd_fill_rect(0, 0, LCD_W, LCD_H, bg);
     lcd_enable();
@@ -49,6 +53,11 @@ int main(void)
         if (l != last_l) {
             lcd_dec(32, 36, l, 4, SCALE, cyan, bg);
             last_l = l;
+        }
+        u32 mv = battery_mv();
+        if (mv != last_mv) {
+            lcd_dec(LCD_W - 32, 4, mv, 4, 2, green, bg);
+            last_mv = mv;
         }
     }
 }

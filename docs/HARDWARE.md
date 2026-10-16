@@ -13,6 +13,7 @@ for this player. Register names follow Rockbox's STMP3700 headers
 | USB, ROM recovery | `066f:3770` "Sigmatel ROM Recovery", HID, 48 bytes per transfer |
 | Firmware | `.sb` v1.1, 16 sections, drive tag 0x50, all-zero key; 1.7.0 dated 2011-05-12 |
 | Storage | 2 GB NAND: data drive, 23.5 MB system drive (tag 0x50), two 1 MB hidden drives |
+| Battery | Li-ion PR332531, 3.7 V, 220 mAh (0.81 Wh) |
 
 Recovery mode: switch off, hold volume + (UP), plug USB in.
 
@@ -34,7 +35,7 @@ image from the system drive and runs `host` (USB mode) or `play`/`pSay`
 | `0x01000-0x0e714` | play0 |
 | `0x00000-0x3fbc8` | boot loader code/data (`mlc_`; `mmc_` similar) |
 | `0x445b8` / `0x4df78` up to ~`0x5e600` | boot loader stacks (`mmc_` / `mlc_`) |
-| `0x60000-0x6da40` | the game (`src/link.ld`) |
+| `0x60000-0x6df28` | the game (`src/link.ld`) |
 | `0x7c000-0x7c660` | Philips power init (`____.0`) |
 
 An earlier build at `0x30000` ran fine from USB but would have overwritten the
@@ -84,5 +85,29 @@ read `CH1` bits 0-11. Thresholds halfway between readings work well.
 - Time: `DIGCTL_MICROSECONDS` (`0x8001c0c0`), free-running 32-bit microseconds.
 - RTC watchdog: armed by `____.3`; clear `RTC_CTRL.WATCHDOGEN`
   (`0x8005c008` = 0x10) or the chip resets into the NAND firmware.
-- Power off: `POWER_RESET` (`0x800440e0`) = `0x3e770001`.
+- Power off: `POWER_RESET` (`0x800440e0`) = `0x3e770001`. First wait for the
+  power slider to be released and clear `RTC_PERSISTENT0.AUTO_RESTART`
+  (and `ALARM_WAKE_EN`; `0x8005c068` = `0x20002`, then wait for
+  `RTC_STAT.NEW_REGS` to clear), or the player switches straight back on.
+  Which of the two was the cause was not isolated.
+- Battery: as in Rockbox, LRADC delay channel 0 triggers channel 7 (source 7,
+  battery) and itself every 200 ticks of 2 kHz; `LRADC_CONVERSION` set to
+  automatic, Li-ion scale, copies the result to `POWER_BATTMONITOR.BATT_VAL`
+  (`0x800440d0` bits 16-25, 8 mV per step). See `src/power.c`;
+  `make run-keytest` shows the mV. The percentage curve is Rockbox's Sansa
+  Fuze+ one, not yet measured on the Raga.
+- USB power: `POWER_STS.VDD5V_GT_VDDIO` (bit 4); `VBUSVALID` needs
+  `POWER_5VCTRL` set up first. Charger running: `POWER_STS.CHRGSTS` (bit 10).
+- Charging: Philips' `pSay0` (charge & play) leaves the charger off, so the
+  game runs it (`charger_update()` in `src/power.c`): `POWER_CHARGE`
+  (`0x80044030`) `BATTCHRG_I` bits 0-5 = 10/20/50/100/200/400 mA,
+  `STOP_ILIMIT` bits 8-11 = 10/20/50/100 mA, clear `PWD_BATTCHRG` (bit 16) to
+  start. Rockbox also switches `POWER_5VCTRL` to the DC-DC on 5 V; we leave
+  power as pSay0 set it.
+- Philips' charger settings: `pSay1` builds a Freescale `ddi_bc` config on
+  the stack (from `0xed1e8`) and passes it to the driver's init (`0xee238`):
+  100 ms state machine, 100 mA/s ramp, 22 mA below 3000 mV (1 h timeout),
+  4200 mV, 120 mA, stop at 16 mA, 4 h timeout, 30 min top-off, die
+  temperature 71 C high / 56 C low with 30 mA safe current. The game uses
+  the currents, the 3000 mV threshold and the timeouts.
 - Also present but unused so far: FM tuner, microphone, audio out.

@@ -10,6 +10,7 @@ the original music player is still one button away.
   a heart of hunger every ~75 minutes, a poop every ~3 hours, nothing drains
   at night
 - Mini games that cheer the pet up: Flappy, Snake, Catch, Runner
+- Battery level in the status row
 
 | | |
 |---|---|
@@ -138,7 +139,7 @@ The game can run from RAM over USB, leaving the device untouched: put the
 Raga in recovery mode (above) and
 
     make run           # the Tamagotchi
-    make run-keytest   # raw button values, for calibration
+    make run-keytest   # raw button values and battery mV, for calibration
 
 Unplugging USB reboots into whatever is in flash.
 

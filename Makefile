@@ -23,7 +23,7 @@ HEADERS  := $(wildcard src/*.h)
 TAMA_SRC := src/start.S src/main.c src/lcd.c src/buttons.c src/fb.c src/clock.c \
             src/power.c src/sprites.c src/gameutil.c src/flappy.c src/snake.c \
             src/catch.c src/runner.c
-KEYTEST_SRC := src/start.S src/keytest.c src/lcd.c
+KEYTEST_SRC := src/start.S src/keytest.c src/lcd.c src/power.c
 
 all: build/raga-tama-fw.sb build/tama-ram.sb build/keytest-ram.sb
 

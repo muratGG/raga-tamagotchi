@@ -24,6 +24,12 @@ void clock_init(void) {}
 unsigned clock_ms(void) { return 0; }
 unsigned clock_us_raw(void) { return 12345; }
 void power_off(void) {}
+void battery_init(void) {}
+unsigned battery_mv(void) { return 0; }
+int battery_percent(unsigned mv) { (void)mv; return 82; }
+int usb_power(void) { return 0; }
+int battery_charging(void) { return 0; }
+void charger_update(unsigned now) { (void)now; }
 
 /* ---- PNG (zlib for the image data) -------------------------------------- */
 
@@ -258,6 +264,7 @@ int main(int argc, char **argv)
     outdir = argv[1];
 
     memset(&g, 0, sizeof(g));
+    batt_mv = 4050; /* any reading: battery_percent() above decides the shot */
     g.state = ST_CHOOSE;
     pet = &species[3];
     render(0);
