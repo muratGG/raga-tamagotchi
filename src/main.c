@@ -931,6 +931,7 @@ int main(void)
             last_input = now;
         if (screen_on && now - last_input >= SCREEN_TIMEOUT_MS) {
             lcd_disable();
+            clock_cpu_slow();
             screen_on = 0;
         }
         if (!screen_on) {
@@ -938,6 +939,7 @@ int main(void)
             if (!pressed)
                 continue;
             /* the press that wakes the screen does nothing else */
+            clock_cpu_fast();
             render(now);
             fb_present();
             lcd_enable();

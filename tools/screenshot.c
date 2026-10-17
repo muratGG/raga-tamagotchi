@@ -23,6 +23,8 @@ unsigned buttons_read(void) { return 0; }
 void clock_init(void) {}
 unsigned clock_ms(void) { return 0; }
 unsigned clock_us_raw(void) { return 12345; }
+void clock_cpu_slow(void) {}
+void clock_cpu_fast(void) {}
 void power_off(void) {}
 void battery_init(void) {}
 unsigned battery_mv(void) { return 0; }

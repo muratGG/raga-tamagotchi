@@ -7,4 +7,9 @@ void clock_init(void);
 unsigned clock_ms(void);
 unsigned clock_us_raw(void);
 
+/* CPU from the 24 MHz crystal instead of the PLL (261.8 MHz) and back, for
+ * while the screen is off. Time keeping runs from the crystal either way. */
+void clock_cpu_slow(void);
+void clock_cpu_fast(void);
+
 #endif

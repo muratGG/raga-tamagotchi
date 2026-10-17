@@ -83,6 +83,12 @@ read `CH1` bits 0-11. Thresholds halfway between readings work well.
 ## Other
 
 - Time: `DIGCTL_MICROSECONDS` (`0x8001c0c0`), free-running 32-bit microseconds.
+- Clocks: `____.2` sets them from a table at `0xcc4`: CPU 261.8 MHz from the
+  PLL, HBUS 130.9 MHz (divider 2), EMI 130.9 MHz; play0 leaves them. While
+  the screen is off the game runs the CPU from the 24 MHz crystal:
+  `CLKCTRL_CPU.DIV_XTAL` (`0x80040020` bits 16-25) = 1, then
+  `CLKCTRL_CLKSEQ.BYPASS_CPU` (`0x800400e0` bit 7) set; clearing it goes
+  back to the PLL. Time and the LRADC run from the crystal either way.
 - RTC watchdog: armed by `____.3`; clear `RTC_CTRL.WATCHDOGEN`
   (`0x8005c008` = 0x10) or the chip resets into the NAND firmware.
 - Power off: `POWER_RESET` (`0x800440e0`) = `0x3e770001`. First wait for the
